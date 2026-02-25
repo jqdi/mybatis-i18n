@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: springbootdemo
+  datasource:
+    url: jdbc:mysql://localhost:3306/template?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 12345678
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# MyBatis 配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: io.github.jqdi.i18n.springbootdemo.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: true
+    lazy-loading-enabled: true
+    default-executor-type: REUSE
+
+# 日志配置（可选，方便看SQL）
+#logging:
+#  level:
+#    io.github.jqdi.i18n.springbootdemo.mapper: debug  # Mapper接口包名，打印SQL执行详情
