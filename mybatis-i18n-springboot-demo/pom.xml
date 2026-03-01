@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>io.github.jqdi</groupId>
 		<artifactId>mybatis-i18n</artifactId>
-		<version>1.0.0</version>
+		<version>${revision}</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>io.github.jqdi</groupId>
 			<artifactId>mybatis-i18n-spring-boot-starter</artifactId>
-			<version>1.0.0</version>
+			<version>${revision}</version>
 		</dependency>
 	</dependencies>
 

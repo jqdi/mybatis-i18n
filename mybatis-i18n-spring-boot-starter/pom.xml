@@ -4,14 +4,15 @@
     <parent>
         <groupId>io.github.jqdi</groupId>
         <artifactId>mybatis-i18n</artifactId>
-        <version>1.0.0</version>
+        <version>${revision}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <name>mybatis i18n spring boot starter</name>
     <artifactId>mybatis-i18n-spring-boot-starter</artifactId>
     <packaging>jar</packaging>
 
-    <description>spring-boot-starter代码</description>
+    <description>mybatis国际化 集成spring-boot代码</description>
 
     <dependencies>
     	<!-- spring-boot mybatis依赖 -->
@@ -25,7 +26,7 @@
         <dependency>
             <groupId>io.github.jqdi</groupId>
             <artifactId>mybatis-i18n-core</artifactId>
-            <version>1.0.0</version>
+            <version>${revision}</version>
         </dependency>
     </dependencies>
 

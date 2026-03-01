@@ -44,9 +44,10 @@ mybatis-i18n
 <dependency>
     <groupId>io.github.jqdi</groupId>
     <artifactId>mybatis-i18n-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>{latest.version}</version>
 </dependency>
 ```
+{latest.version}可通过[中央仓库](https://central.sonatype.com/artifact/io.github.jqdi/mybatis-i18n-spring-boot-starter)查询
 
 ### 2. 实体类配置
 
@@ -112,7 +113,6 @@ CREATE TABLE `app_version_i18n` (
 -- 插入示例数据
 INSERT INTO `app_version_i18n` (`id`, `app_version_id`, `locale`, `release_notes`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (1, 4, 'en-US', 'Major bugs in version 1.0.0 have been fixed, and version 1.0.0 is no longer supported', '', '2026-02-11 17:47:56', 1, '2026-02-11 17:50:14', 1);
 ```
-
 
 如果使用统一的国际化表，可不要app_version_i18n
 

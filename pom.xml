@@ -5,11 +5,11 @@
 
 	<groupId>io.github.jqdi</groupId>
 	<artifactId>mybatis-i18n</artifactId>
-	<version>1.0.0</version>
+	<version>${revision}</version>
 	<packaging>pom</packaging>
 
 	<name>mybatis-i18n</name>
-	<description>mybatis 国际化</description>
+	<description>一个注解实现mybatis查询自动完成多语言替换，让国际化变得简单优雅</description>
 	<url>https://github.com/jqdi/mybatis-i18n</url>
 
 	<licenses>
@@ -38,7 +38,7 @@
 
 	<properties>
 		<!--项目版本定义、升级统一改这里-->
-		<revision>1.0.2</revision>
+		<revision>1.0.1</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
@@ -48,6 +48,7 @@
 		<!-- 核心模块 -->
 		<module>mybatis-i18n-core</module>
 		<module>mybatis-i18n-spring-boot-starter</module>
+		<!-- demo模块 -->
 		<module>mybatis-i18n-springboot-demo</module>
 	</modules>
 
@@ -80,7 +81,7 @@
 	                <execution>
 	                    <id>attach-sources</id>
 	                    <goals>
-	                        <goal>jar</goal>
+							<goal>jar-no-fork</goal>
 	                    </goals>
 	                </execution>
 	            </executions>
@@ -96,16 +97,47 @@
 							<goal>jar</goal>
 						</goals>
 						<configuration>
-							<skip>true</skip>
+							<additionalJOptions>
+								<additionalJOption>-Xdoclint:none</additionalJOption>
+							</additionalJOptions>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
 			<!--配置部署插件-->
+			<!-- 配置部署插件用于SNAPSHOT发布 -->
+			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
-				<version>2.8.2</version>
+				<version>3.1.1</version>
+			</plugin>
+			-->
+			<!-- 配置部署插件用于Release发布 -->
+			<plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.9.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<!-- 需与maven setting.xml中配置的server的id一致 -->
+					<publishingServerId>central</publishingServerId>
+				</configuration>
+			</plugin>
+			<!--配置GPG签名插件-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<!--构建过程中，将占位符替换为实际值-->
 			<plugin>
