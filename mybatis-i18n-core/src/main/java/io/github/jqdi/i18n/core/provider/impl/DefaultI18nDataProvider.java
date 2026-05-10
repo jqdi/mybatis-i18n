@@ -1,12 +1,14 @@
 package io.github.jqdi.i18n.core.provider.impl;
 
-import io.github.jqdi.i18n.core.metadata.I18nFieldInfo;
-import io.github.jqdi.i18n.core.metadata.RelatedI18nValueMapping;
-import io.github.jqdi.i18n.core.provider.I18nDataProvider;
-
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import io.github.jqdi.i18n.core.metadata.I18nFieldInfo;
+import io.github.jqdi.i18n.core.metadata.I18nTableInfo;
+import io.github.jqdi.i18n.core.metadata.RelatedI18nValueMapping;
+import io.github.jqdi.i18n.core.provider.I18nDataProvider;
 
 /**
  * 国际化数据提供者（默认）
@@ -15,11 +17,11 @@ import java.util.Set;
  */
 public class DefaultI18nDataProvider implements I18nDataProvider {
 
-    public DefaultI18nDataProvider() {
-    }
+    public DefaultI18nDataProvider() {}
 
     @Override
-    public List<RelatedI18nValueMapping> getValueMapping(I18nFieldInfo i18nFieldInfo, Set<Object> relatedFieldValueSet) {
-        return Collections.emptyList();
+    public Map<I18nFieldInfo, List<RelatedI18nValueMapping>> getValueMapping(I18nTableInfo i18nTableInfo,
+        Set<Object> relatedFieldValueSet) {
+        return Collections.emptyMap();
     }
 }

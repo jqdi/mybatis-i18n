@@ -1,6 +1,7 @@
 package io.github.jqdi.i18n.springbootdemo.entity;
 
 import io.github.jqdi.i18n.core.annotation.I18nField;
+import io.github.jqdi.i18n.core.annotation.I18nTable;
 import io.github.jqdi.i18n.springbootdemo.i18n.CommonI18nDataProvider;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -9,6 +10,8 @@ import java.time.LocalDateTime;
 
 @Data
 @Accessors(chain = true)
+@I18nTable(i18nTable = "app_version_i18n", i18nRelatedColumn = "app_version_id", relatedValueFromField = "id")
+//@I18nTable(i18nTable = "app_version_i18n", i18nRelatedColumn = "app_version_id", relatedValueFromField = "id", i18nDataProvider = CommonI18nDataProvider.class) // 统一国际化表方式
 public class AppVersion {
 	private Integer id;
 
@@ -40,8 +43,7 @@ public class AppVersion {
 	/**
      * 发布说明
      */
-//    @I18nField(i18nTable = "app_version_i18n", i18nColumn = "release_notes", i18nRelatedColumn = "app_version_id", relatedValueFromField = "id")
-	@I18nField(i18nTable = "app_version_i18n", i18nColumn = "release_notes", i18nRelatedColumn = "app_version_id", relatedValueFromField = "id", i18nDataProvider = CommonI18nDataProvider.class) // 统一国际化表方式
+	@I18nField(i18nColumn = "release_notes")
     private String releaseNotes;
 
 	private String remark;

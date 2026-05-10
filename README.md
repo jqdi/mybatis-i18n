@@ -9,6 +9,7 @@
 - **灵活配置**：支持多种数据提供方式和自定义策略
 - **Spring Boot集成**：提供starter模块，开箱即用
 - **高性能**：基于MyBatis拦截器实现，性能损耗极低
+- **灵活排除**：支持通过注解排除特定方法的国际化处理
 
 ## 模块说明
 
@@ -16,7 +17,9 @@
 mybatis-i18n
 ├── mybatis-i18n-core                    -- 核心模块
 │   ├── annotation                       -- 核心注解
-│   │   └── @I18nField                  -- 国际化字段注解
+│   │   ├── @I18nTable                   -- 国际化表注解（类级别）
+│   │   ├── @I18nField                   -- 国际化字段注解
+│   │   └── @ExcludeI18n                 -- 排除国际化注解
 │   ├── plugin                           -- MyBatis插件
 │   │   ├── I18nFieldValueReplaceInterceptor -- 字段值替换拦截器
 │   │   └── I18nReplaceHandler          -- 替换处理器
@@ -25,11 +28,19 @@ mybatis-i18n
 │   │   ├── I18nDataProviderFactory     -- 数据提供者工厂
 │   │   └── impl
 │   │       └── DefaultI18nDataProvider -- 默认数据提供者
-│   └── metadata                         -- 元数据处理
-│       ├── I18nFieldInfo               -- 字段信息
-│       └── RelatedI18nValueMapping     -- 关联映射
+│   ├── metadata                         -- 元数据处理
+│   │   ├── I18nFieldInfo               -- 字段信息
+│   │   ├── I18nTableInfo               -- 表信息
+│   │   └── RelatedI18nValueMapping     -- 关联映射
+│   └── toolkit                          -- 工具类
+│       ├── ReflectionKit                -- 反射工具
+│       └── CollectionUtils              -- 集合工具
 ├── mybatis-i18n-spring-boot-starter     -- Spring Boot Starter
-│   └── PluginsAutoConfiguration        -- 自动配置类
+│   ├── PluginsAutoConfiguration         -- 自动配置类
+│   ├── exclude
+│   │   ├── SpringExcludeI18nChecker     -- Spring环境排除检查器
+│   │   └── aspect
+│   │       └── ExcludeI18nAspect        -- 排除国际化切面
 │   └── provider
 │       ├── JdbcTemplateI18nDataProvider -- JdbcTemplate数据提供者
 │       └── SpringI18nDataProviderFactory -- Spring数据提供者工厂
@@ -51,11 +62,17 @@ mybatis-i18n
 
 ### 2. 实体类配置
 
-在需要国际化的字段上添加 `@I18nField` 注解：
+在需要国际化的类上添加 `@I18nTable`，字段上添加 `@I18nField` 注解：
 
 ```java
 @Data
 @Accessors(chain = true)
+@I18nTable(
+        i18nTable = "app_version_i18n",        // 国际化表名
+        i18nRelatedColumn = "app_version_id",  // 国际化表关联字段
+        relatedValueFromField = "id",          // 主表关联值来源字段（一般是主键）
+        i18nLocaleColumn = "locale"            // 语言编码字段名（默认为locale）
+)
 public class AppVersion {
     private Integer id;
     private String appCode;
@@ -63,14 +80,8 @@ public class AppVersion {
     private LocalDateTime releaseTime;
     private String downloadUrl;
 
-    @I18nField(
-        i18nTable = "app_version_i18n",           -- 国际化表名
-        i18nColumn = "release_notes",             -- 国际化表中的字段名
-        i18nRelatedColumn = "app_version_id",     -- 国际化表关联字段
-        relatedValueFromField = "id",             -- 主表关联值来源字段
-        i18nLocaleColumn = "locale"               -- 语言编码字段名（默认为locale）
-    )
-    private String releaseNotes;                  -- 将被国际化内容替换
+    @I18nField(i18nColumn = "release_notes")  // 国际化表中的字段名
+    private String releaseNotes;               // 将被国际化内容替换
 
     private String remark;
 }
@@ -152,66 +163,124 @@ public class AppVersionController {
 
 ## 核心注解详解
 
+### @I18nTable
+
+用于标记需要国际化的实体类（类级别注解）。
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| i18nTable | String | 是 | - | 国际化表名 |
+| i18nRelatedColumn | String | 是 | - | 国际化表关联字段（用于关联主表） |
+| relatedValueFromField | String | 是 | - | 主表中关联值来源的属性名（一般是主键） |
+| i18nLocaleColumn | String | 否 | locale | 国际化语言编码字段名（存储zh-CN、en-US等） |
+| i18nDataProvider | Class | 否 | I18nDataProvider.class | 自定义数据提供者 |
+
 ### @I18nField
 
 用于标记需要国际化的字段。
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| i18nTable | String | 是 | - | 国际化表名 |
 | i18nColumn | String | 是 | - | 国际化表中的字段名 |
-| i18nRelatedColumn | String | 是 | - | 国际化表关联字段（用于关联主表） |
-| relatedValueFromField | String | 是 | - | 主表中关联值来源的字段名 |
-| i18nLocaleColumn | String | 否 | locale | 国际化语言编码字段名 |
-| i18nDataProvider | Class | 否 | I18nDataProvider.class | 自定义数据提供者 |
+
+### @ExcludeI18n
+
+用于排除特定方法的国际化处理（方法级别注解）。
+
+```java
+@Service
+public class AppVersionService {
+    
+    @ExcludeI18n  // 此方法的查询结果不进行国际化替换
+    public AppVersion selectById(Integer id) {
+        return appVersionMapper.selectById(id);
+    }
+    
+    public AppVersion selectLastByAppCode(String appCode) {
+        return appVersionMapper.selectLastByAppCode(appCode);
+    }
+}
+```
 
 ## 高级配置
 
 ### 自定义数据提供者
 
-如果默认的数据提供者不满足需求，可以实现 `I18nDataProvider` 接口：
+如果默认的数据提供者不满足需求（如使用统一国际化表），可以实现 `I18nDataProvider` 接口：
 
 ```java
 @Component
-public class CustomI18nDataProvider implements I18nDataProvider {
-    
+public class CommonI18nDataProvider implements I18nDataProvider {
+
+    @Autowired
+    private CommonI18nService commonI18nService;
+
     @Override
-    public List<RelatedI18nValueMapping> getValueMapping(
-        I18nFieldInfo i18nFieldInfo, 
-        Set<Object> relatedFieldValueSet
-    ) {
-        String i18nTable = i18nFieldInfo.getI18nTable();
-        String i18nColumn = i18nFieldInfo.getI18nColumn();
-        String i18nRelatedColumn = i18nFieldInfo.getI18nRelatedColumn();
-        String i18nLocaleColumn = i18nFieldInfo.getI18nLocaleColumn();
-        
-        List<RelatedI18nValueMapping> mappings = new ArrayList<>();
-        
-        for (Object relatedValue : relatedFieldValueSet) {
-            String locale = LocaleContextHolder.getLocale().toLanguageTag();
-            String i18nValue = fetchI18nValue(i18nTable, i18nRelatedColumn, 
-                                              relatedValue, i18nLocaleColumn, 
-                                              i18nColumn, locale);
-            if (i18nValue != null) {
-                mappings.add(new RelatedI18nValueMapping(relatedValue, i18nValue));
-            }
-        }
-        
-        return mappings;
+    public Map<I18nFieldInfo, List<RelatedI18nValueMapping>> getValueMapping(I18nTableInfo i18nTableInfo,
+                                                                             Set<Object> relatedFieldValueSet) {
+        String i18nTable = i18nTableInfo.getI18nTable();
+        String prefix = i18nTable.replace("_i18n", "");
+
+        List<I18nFieldInfo> i18nFieldInfoList = i18nTableInfo.getI18nFieldInfoList();
+        List<Integer> businessIdList = relatedFieldValueSet.stream().filter(Objects::nonNull).map(Object::toString)
+                .map(Integer::valueOf).collect(Collectors.toList());
+
+        List<CommonI18n> commonI18nParamList = i18nFieldInfoList.stream().map(I18nFieldInfo::getI18nColumn)
+                .map(v -> i18nTable.replace("_i18n", "") + "." + v).map(businessType -> {
+                    return businessIdList.stream().map(businessId -> {
+                        CommonI18n commonI18n = new CommonI18n();
+                        commonI18n.setBusinessType(businessType);
+                        commonI18n.setBusinessId(businessId);
+                        return commonI18n;
+                    }).collect(Collectors.toList());
+                }).flatMap(Collection::stream).collect(Collectors.toList());
+
+        List<CommonI18n> commonI18nList = commonI18nService.selectByBusinessTypesBusinessIdsLocale(commonI18nParamList,
+                LocaleContextHolder.getLocale().toLanguageTag());
+        return i18nFieldInfoList.stream().collect(Collectors.toMap(f -> f, i18nFieldInfo -> {
+            List<RelatedI18nValueMapping> relatedI18nValueMappingList =
+                    commonI18nList.stream().filter(v -> v.getBusinessType().equals(prefix + "." + i18nFieldInfo.getI18nColumn()))
+                            .map(v -> new RelatedI18nValueMapping(v.getBusinessId(), v.getI18nText())).collect(Collectors.toList());
+            return relatedI18nValueMappingList;
+        }));
     }
 }
 ```
 
-### 配置MyBatis插件
+然后在实体类上指定自定义的数据提供者：
 
-插件会自动注册，无需手动配置。
+```java
+@I18nTable(
+    i18nTable = "app_version_i18n", 
+    i18nRelatedColumn = "app_version_id", 
+    relatedValueFromField = "id",
+    i18nDataProvider = CommonI18nDataProvider.class  // 指定自定义数据提供者
+)
+public class AppVersion {
+    // ...
+}
+```
+
+### 自动配置的Bean
+
+Spring Boot Starter会自动配置以下Bean：
+
+| Bean名称 | 说明 |
+|---------|------|
+| JdbcTemplateI18nDataProvider | 默认数据提供者，基于JdbcTemplate |
+| SpringI18nDataProviderFactory | 数据提供者工厂 |
+| I18nFieldValueReplaceInterceptor | MyBatis拦截器，实现自动替换 |
+| SpringExcludeI18nChecker | 排除国际化检查器 |
+| ExcludeI18nAspect | 排除国际化切面 |
 
 ## 工作原理
 
-1. **拦截查询**：MyBatis拦截器拦截查询结果
-2. **解析注解**：扫描实体类中的 `@I18nField` 注解
-3. **批量查询**：根据关联字段值批量查询国际化数据
-4. **自动替换**：将查询结果中的字段值替换为对应的国际化内容
+1. **拦截查询**：MyBatis拦截器拦截StatementHandler的query方法
+2. **检查排除**：检查当前方法是否标记了 `@ExcludeI18n` 注解
+3. **解析注解**：扫描实体类中的 `@I18nTable` 和 `@I18nField` 注解
+4. **收集关联值**：从查询结果中收集所有关联字段值（去重）
+5. **批量查询**：根据关联字段值批量查询国际化数据
+6. **自动替换**：将查询结果中的字段值替换为对应的国际化内容
 
 ## 使用场景
 
@@ -244,8 +313,17 @@ LocaleContextHolder.setLocale(Locale.CHINA);
 
 ### 3. 支持哪些语言？
 
-支持所有标准的语言编码，如：`zh-CN`（简体中文）、`zh-TW`（繁体中文）、`en-US`（英语）、`ja-JP`（日语）等。
+支持所有标准的语言编码，如：
+- `zh-CN`（简体中文）
+- `zh-TW`（繁体中文）
+- `en-US`（英语）
+- `ja-JP`（日语）
+- `ko-KR`（韩语）
+- 其他符合ISO 639-1标准的语言编码
 
+### 4. 如何排除某个方法的国际化处理？
+
+在方法上添加 `@ExcludeI18n` 注解即可。
 
 ## 示例项目
 

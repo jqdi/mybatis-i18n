@@ -1,85 +1,48 @@
 package io.github.jqdi.i18n.core.metadata;
 
-import io.github.jqdi.i18n.core.provider.I18nDataProvider;
-
 import java.lang.reflect.Field;
+import java.util.Objects;
 
 /**
- * 国际化字段信息（数据库的表名、字段名）
+ * 国际化字段信息（实体类字段与数据库的字段对应关系）
  *
  * @author JQ棣
  */
 public class I18nFieldInfo {
     /**
      * 本字段属性
-     *
-     * @since 3.3.1
      */
     private final Field field;
-
-    /**
-     * 国际化表名
-     */
-    private final String i18nTable;
 
     /**
      * 国际化字段名
      */
     private final String i18nColumn;
-    /**
-     * 关联字段名
-     */
-    private final String i18nRelatedColumn;
-    /**
-     * 关联值来源属性
-     */
-    private final Field relatedValueFromField;
-    /**
-     * 国际化语言编码字段名（存储zh-CN、zh-TW、en-US等语言编码）
-     */
-    private final String i18nLocaleColumn;
-    /**
-     * 国际化数据提供者
-     */
-    private final Class<? extends I18nDataProvider> i18nDataProvider;
 
-    public I18nFieldInfo(Field field, String i18nTable, String i18nColumn, String i18nRelatedColumn, Field relatedValueFromField,
-                         String i18nLocaleColumn, Class<? extends I18nDataProvider> i18nDataProvider) {
+    public I18nFieldInfo(Field field, String i18nColumn) {
         this.field = field;
-        this.i18nTable = i18nTable;
         this.i18nColumn = i18nColumn;
-        this.i18nRelatedColumn = i18nRelatedColumn;
-        this.relatedValueFromField = relatedValueFromField;
-        this.i18nLocaleColumn = i18nLocaleColumn;
-        this.i18nDataProvider = i18nDataProvider;
     }
 
     public Field getField() {
         return field;
     }
 
-    public String getI18nTable() {
-        return i18nTable;
-    }
-
     public String getI18nColumn() {
         return i18nColumn;
     }
 
-    public String getI18nRelatedColumn() {
-        return i18nRelatedColumn;
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        I18nFieldInfo that = (I18nFieldInfo)o;
+        return Objects.equals(field, that.field) && Objects.equals(i18nColumn, that.i18nColumn);
     }
 
-    public Field getRelatedValueFromField() {
-        return relatedValueFromField;
+    @Override
+    public int hashCode() {
+        return Objects.hash(field, i18nColumn);
     }
-
-    public String getI18nLocaleColumn() {
-        return i18nLocaleColumn;
-    }
-
-    public Class<? extends I18nDataProvider> getI18nDataProvider() {
-        return i18nDataProvider;
-    }
-
 }
